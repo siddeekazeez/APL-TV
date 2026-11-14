@@ -56,14 +56,15 @@ import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
 /* APL TV's helper on Android: the same service as on Samsung and LG (app/service/service.js), in Java,
-   on port 8765 while the app is open.
+   on port 8766 while the custom app is open.
    1. The phone setup page behind the QR code (the same page, generated from service.js at build time):
-      http://<screen>:8765/?k=<code>, only with the code shown on the screen, only while it is shown.
+      http://<screen>:8766/?k=<code>, only with the code shown on the screen, only while it is shown.
    2. For the app only (requests from the screen itself): /fetch (a provider's answer, gzip opened),
       /epg and /epg/match (XMLTV guides read here and cut to what the app needs), /imdb (IMDb's daily
       ratings file), /log. */
 final class Helper {
-    private static final int PORT = 8765;
+    // Separate from the official app: both may remain running in the background.
+    static final int PORT = 8766;
     private static final long SESSION_MS = 20 * 60 * 1000L, EPG_KEEP_MS = 10 * 60 * 1000L, IMDB_DAY = 24 * 3600 * 1000L;
     private static final String UA = "APL TV (Android)";
     private final Context ctx;

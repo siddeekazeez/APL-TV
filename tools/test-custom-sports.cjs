@@ -96,3 +96,20 @@ if (process.env.SPORTS_FIXTURE_DIR) {
     await assert.rejects(fresh.window.APL_CUSTOM_SPORTS.range('cricket', from, to, task => task(), parse), /offline/);
     console.log('Sports source caching and failure tests passed');
 })().catch(error => { console.error(error); process.exitCode = 1; });
+
+// The client must talk to its own native helper even when both app variants are running.
+const helperCode = fs.readFileSync(path.join(root, 'app/js/helper.js'), 'utf8');
+function helperPort(bridge) {
+    const host = { window: { TV: {} } };
+    if (bridge) host.window.APLAndroid = bridge;
+    vm.runInNewContext(helperCode, host);
+    return host.window.TV.helper.PORT;
+}
+assert.equal(helperPort({ helperPort: () => 8766 }), 8766);
+assert.equal(helperPort({}), 8765, 'older installed APKs keep working');
+assert.equal(helperPort(), 8765, 'Samsung and LG keep their original port');
+const nativeHelper = fs.readFileSync(path.join(root, 'android/app/src/main/java/com/knikt/apltv/Helper.java'), 'utf8');
+const nativeHost = fs.readFileSync(path.join(root, 'android/app/src/main/java/com/knikt/apltv/MainActivity.java'), 'utf8');
+assert.ok(nativeHelper.includes('static final int PORT = 8766;'));
+assert.ok(nativeHost.includes('@JavascriptInterface public int helperPort() { return Helper.PORT; }'));
+console.log('Phone helper isolation tests passed');

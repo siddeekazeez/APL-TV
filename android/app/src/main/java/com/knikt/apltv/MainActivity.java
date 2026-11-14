@@ -191,6 +191,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void exit() { runOnUiThread(() -> { player.close(); finishAndRemoveTask(); }); }
         @JavascriptInterface public void background() { runOnUiThread(() -> moveTaskToBack(true)); }
         @JavascriptInterface public void startHelper() { helper.start(); }
+        @JavascriptInterface public int helperPort() { return Helper.PORT; }
         /* Sports (js/sports.js): a match's video summary, opened in the YouTube app (or SmartTube, whichever the
            screen chooses). YouTube's own addresses only. */
         @JavascriptInterface public boolean openLink(String url) {

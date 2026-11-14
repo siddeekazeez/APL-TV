@@ -14,6 +14,10 @@ Original project: [Knikt/APL-TV](https://github.com/Knikt/APL-TV), created by **
 - Android package `com.siddeekazeez.apltv`, named APL TV Sports, avoids uninstalling the official app or losing its data. The custom app's later APKs share one private signing key.
 - The web updater points to this fork, so it cannot silently replace custom code with unmodified upstream code.
 
+## Phone setup fix
+
+The custom Android helper uses port **8766**, separate from the official app's 8765. The web app reads the port from its native Android host, including phone QR links, playlist submissions, playlist editing, guide access and embedded video summaries. Older Android hosts and other platforms retain 8765. After installing this fix, rescan the TV's current QR code rather than reusing an old phone page.
+
 ## Updates
 
 The Custom Android release workflow runs daily at 03:23 UTC and can be run manually from Actions. It merges the latest official release tag into the fork, regenerates manifests, runs upstream checks and sports regression tests, builds and verifies the signed APK, then publishes merged source and a GitHub Release. Unchanged source is not rebuilt on the daily check. Manual runs can rebuild.

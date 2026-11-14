@@ -9,6 +9,8 @@
 
     var TV = global.TV;
     var SERVICE_ID = "APLTVMedia.Helper", PORT = 8765;
+    // Ask the installed Android host: cached web updates and older APKs stay compatible.
+    if (global.APLAndroid && global.APLAndroid.helperPort) PORT = Number(global.APLAndroid.helperPort());
     var bases = null, baseIndex = 0, starting = null;
 
     function hosts() {
