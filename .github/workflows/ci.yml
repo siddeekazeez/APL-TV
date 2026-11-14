@@ -19,4 +19,6 @@ jobs:
         with:
           python-version: "3.12"
       - name: APL TV checks
-        run: python3 tools/check.py
+        run: |
+          python3 tools/check.py
+          node tools/test-custom-sports.cjs

@@ -1,7 +1,9 @@
 /* ============================================================
    lang-fr.js: French text of the interface (see js/i18n.js).
    Each key is the English text exactly as written in the code;
-   {name} placeholders stay as they are.
+   {
+    "Cricket": "Cricket",
+name} placeholders stay as they are.
    ============================================================ */
 window.TV_LANG_FR = {
     /* 1.0.11: Stream Info, Quality, Audio */

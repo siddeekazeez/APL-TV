@@ -16,7 +16,7 @@
     </queries>
 
     <application
-        android:label="APL TV"
+        android:label="APL TV Sports"
         android:icon="@mipmap/ic_launcher"
         android:banner="@drawable/banner"
         android:allowBackup="false"
@@ -27,7 +27,7 @@
         android:theme="@style/AplTheme">
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.knikt.apltv.MainActivity"
             android:exported="true"
             android:launchMode="singleTask"
             android:screenOrientation="landscape"
@@ -42,8 +42,8 @@
 
         <!-- APL Launcher's Top Shelf: what you were watching and your last channel, for APL Launcher only -->
         <provider
-            android:name=".ShelfProvider"
-            android:authorities="com.knikt.apltv.shelf"
+            android:name="com.knikt.apltv.ShelfProvider"
+            android:authorities="com.siddeekazeez.apltv.shelf"
             android:exported="true" />
     </application>
 </manifest>

@@ -1,3 +1,19 @@
+# APL TV Sports — custom fork
+
+Based on **[APL TV by Knikt (Gero Corp.)](https://github.com/Knikt/APL-TV)**. All credit for the original player, interface, platform support and existing sports system belongs to the original developer and contributors. This is an independent fork, not an official release or endorsement.
+
+**Our additions:** UFC bouts, UFC first in the sports banner and rows, Sri Lanka senior international cricket (Tests, ODIs, T20Is), and a workflow that checks for upstream releases daily and publishes a signed Android build after checks pass. Existing sports favorites are retained. Original copyright and MIT license are preserved in [LICENSE](LICENSE).
+
+- [Download the latest custom Android APK](https://github.com/siddeekazeez/APL-TV/releases/latest)
+- [Changes, update process, tests and limitations](CUSTOMIZATIONS.md)
+- [Custom build and update workflow](https://github.com/siddeekazeez/APL-TV/actions/workflows/release.yml)
+
+The Android app is **APL TV Sports** (`com.siddeekazeez.apltv`) and installs alongside the official app. It has separate settings. You can export/import APL TV settings using the app's supported backup tools; never post a backup containing provider credentials on GitHub. No channels or providers are supplied.
+
+---
+
+## Original project README
+
 <div align="center">
 
 # APL TV

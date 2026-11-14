@@ -2,7 +2,7 @@
  "version": "1.1.1",
  "loader": 1,
  "reinstall": "1.0.1",
- "notes": "Your playlists sorted by themselves: countries and languages recognised in every category, the provider's separators and codes taken off. Also Polish football in Sports, tables for basketball, hockey and handball, and a frozen picture on Fire TV caught.",
+ "notes": "Custom sports: UFC first and Sri Lanka international cricket; based on Knikt/APL-TV.",
  "platforms": {
   "tizen": {
    "reinstall": "1.0.1"
@@ -36,6 +36,7 @@
   "js/home.js",
   "js/live.js",
   "js/guide.js",
+  "js/custom-sports.js",
   "js/sports.js",
   "js/vod.js",
   "js/library.js",

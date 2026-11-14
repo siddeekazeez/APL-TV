@@ -19,7 +19,10 @@
 
     /* The leagues, in the order of the page, grouped by country or region (the choice of favourites shows the groups).
        [ESPN's name, the name shown, kind: i national teams, w women, f friendlies, the group] */
+    var CUSTOM = global.APL_CUSTOM_SPORTS;
     var SPORTS = [
+        { id: "mma", label: "UFC", leagues: [CUSTOM.leagues.mma] },
+        { id: "cricket", label: "Cricket", leagues: [CUSTOM.leagues.cricket] },
         { id: "soccer", label: US ? "Soccer" : "Football", leagues: [
             ["uefa.champions", "Champions League", "", "European Cups"], ["uefa.europa", "Europa League", "", "European Cups"],
             ["uefa.europa.conf", "Conference League", "", "European Cups"], ["uefa.super_cup", "UEFA Super Cup", "", "European Cups"],
@@ -78,7 +81,9 @@
        pref sportsFav: { sports: [ids], types: { men, women, friendly }, leagues: ["soccer/fra.1"…], teams: [{ s, l, id, n, logo, nat }] }
        or { skipped: 1 }: every league but the women's ones and the clubs' friendlies, as before. */
     var testFav = null, testCC = "";                                          // development tests only, never saved
-    function fav() { if (testFav) return testFav; var f = TV.pref("sportsFav"); return f && typeof f === "object" ? f : null; }
+    function fav() { if (testFav) return testFav; var f = TV.pref("sportsFav");
+        if (f && typeof f === "object" && CUSTOM.enhance(f)) TV.setPref("sportsFav", f);
+        return f && typeof f === "object" ? f : null; }
     function chosen() { var f = fav(); return f && !f.skipped && f.leagues ? f : null; }
     function follows(sp, lg) {
         var f = chosen();
@@ -280,7 +285,7 @@
     function byTime(a, b) { return a.start - b.start || (a.home.name < b.home.name ? -1 : 1); }
     function isLive(m) { return m.state === "in"; }
     // still "to come" six hours after its start, neither postponed nor cancelled: ESPN never updated it
-    function stale(m) { return m.state === "pre" && m.start < Date.now() - 6 * 3600000 && !/POSTPONED|CANCEL|DELAY|SUSPEND/.test(m.status || ""); }
+    function stale(m) { if (m.sport === "cricket" && m.end > Date.now()) return false; return m.state === "pre" && m.start < Date.now() - 6 * 3600000 && !/POSTPONED|CANCEL|DELAY|SUSPEND/.test(m.status || ""); }
     // A competition's place in the page's order (sports, then leagues as listed)
     function leagueRank(m) {
         for (var i = 0, n = 0; i < SPORTS.length; i++) {
@@ -403,6 +408,7 @@
     }
     function statusOf(m) {
         var n = m.status;
+        if (m.sport === "cricket" && m.live && m.state !== "pre") return { text: m.live, live: m.state === "in", done: m.state === "post" };
         if (/POSTPONED/.test(n)) return { text: T("Postponed"), done: m.state === "post" };
         if (/CANCEL|ABANDON/.test(n)) return { text: T("Cancelled"), done: true };
         if (m.state === "pre") return { text: TV.hhmm(m.start) };
@@ -1154,7 +1160,9 @@
             var day = shownList().filter(function (m) { return !/CANCEL|POSTPONED/.test(m.status); });
             list = day.filter(isLive).concat(day.filter(function (m) { return m.state === "pre"; }).sort(byTime));
         }
-        return { list: list.slice(0, 6), ours: ours };
+        var ufc = shownList().filter(function (m) { return m.sport === "mma" && m.state !== "post" && !stale(m) && !/CANCEL|POSTPONED/.test(m.status); }).sort(byRank);
+        if (ufc.length) list = ufc.concat(list.filter(function (m) { return m.sport !== "mma"; }));
+        return { list: list.slice(0, 6), ours: ufc.length ? false : ours };
     }
     function Hero(f) {
         this.root = el("div", "sh"); this.items = f.list; this.ours = f.ours; this.index = 0; this.active = false; this.t0 = Date.now();
@@ -1339,7 +1347,7 @@
     function sigNow() { return signature(shownList()) + "|" + signature(mine.filter(ofSport)) + "|" + sportId + "|" + dayOff; }
     // In play first, then what comes, then what is over (hidden if you chose so)
     function rank(m) { return isLive(m) ? 0 : m.state === "pre" ? 1 : 2; }
-    function byRank(a, b) { return rank(a) - rank(b) || byTime(a, b); }
+    function byRank(a, b) { return CUSTOM.priority(a) - CUSTOM.priority(b) || rank(a) - rank(b) || byTime(a, b); }
     function drawRows() {
         var was = strips[zone], wasKey = was && was.key, wasId = was && was.current() && was.current().id;
         var list = shownList();
@@ -1356,6 +1364,11 @@
         var f = featured();
         if (f.list.length) { var h = new Hero(f); strips.push(h); rowsEl.appendChild(h.root); }
         if (dayOff === "past") my.sort(function (a, b) { return b.start - a.start; });
+        var ufcRow = list.filter(function (m) { return m.sport === "mma"; }).sort(byRank);
+        if (ufcRow.length) {
+            addRow("mma/ufc", "UFC", ufcRow, true, "", "", dayOff === "next" || dayOff === "past");
+            list = list.filter(function (m) { return m.sport !== "mma"; });
+        }
         if (my.length) addRow("mine", T("My Teams"), my, true, "", "star", dayOff === "next" || dayOff === "past");
         // What comes next: a calendar, one row a day
         if (dayOff === "next" || dayOff === "past") {
@@ -1369,7 +1382,7 @@
             restore(wasKey, wasId);
             return;
         }
-        var live = list.filter(isLive);
+        var live = list.filter(isLive).sort(byRank);
         if (live.length) addRow("live", T("Live Now"), live, true, "", "live");
         var by = {};
         list.forEach(function (m) { if (activeKey(m)) (by[m.lkey] = by[m.lkey] || []).push(m); });
@@ -1470,6 +1483,7 @@
         loading = true;
         if (fresh) { failed = false; mine = []; drawRows(); }
         function ask(sp, lg) {
+            if (sp.id === "mma" || sp.id === "cricket") { jobs.push(CUSTOM.range(sp.id, from, to, limited, readEvent).then(null, function () { return null; })); return; }
             if (is365(lg)) { jobs.push(range365(sp, lg, from, to).then(null, function () { return null; })); return; }
             if (!ahead || !lg) { days.forEach(function (d) { jobs.push(league(sp, lg, d).then(null, function () { return null; })); }); return; }
             // what comes next, the results, a calendar's day: the month (or the two months) at once
@@ -1509,7 +1523,7 @@
                 if (!l) return;
                 ok++;
                 l.forEach(function (m) {
-                    if (seen[m.id] || m.start < from || m.start >= to || !(activeKey(m) || isFavMatch(m)) || stale(m)) return;
+                    if (seen[m.id] || !CUSTOM.inSpan(m, from, to) || !(activeKey(m) || isFavMatch(m)) || stale(m)) return;
                     seen[m.id] = 1; out.push(keep(m));
                 });
             });
@@ -1566,13 +1580,13 @@
        ESPN's match summary (site.api.espn.com …/summary?event=), kept 30 s in play, 10 min after. */
     var sheet = { open: false, m: null, lang: "", zone: "btns", nav: null, tabNav: null, strip: null, el: null, list: [], tab: "", body: null, tabs: [] };
     var details = {}, videos = {}, videoFound = {};
-    function eventId(m) { return m.id.slice(m.id.indexOf(":") + 1); }
+    function eventId(m) { return m.sourceEvent || m.id.slice(m.id.indexOf(":") + 1); }
     function summaryOf(m) {
         var c = details[m.id];
         if (c && c.p) return c.p;
         if (c && Date.now() - c.at < (isLive(m) ? 30000 : 10 * 60000)) return Promise.resolve(c.d);
         // a 365Scores competition's match: no ESPN summary, but its table (table365)
-        var p = (m.src === "365" ? table365(m) : limited(function () { return TV.fetchJSON(API + m.sport + "/" + m.league[0] + "/summary?event=" + eventId(m), { timeout: 15000 }); })
+        var p = (m.src === "365" ? table365(m) : limited(function () { return TV.fetchJSON(API + m.sport + "/" + (m.sourceLeague || m.league[0]) + "/summary?event=" + eventId(m), { timeout: 15000 }); })
             .then(function (j) { return readSummary(j, m); })).then(function (d) {
             details[m.id] = { at: Date.now(), d: d };
             return details[m.id].d;
@@ -2435,11 +2449,13 @@
     function draftOf() {
         var f = chosen();
         if (f) return JSON.parse(JSON.stringify(f));
-        var want = SUGGEST.concat(SUGGEST_LANG[TV.lang] || []), leagues = [];
+        var want = SUGGEST.concat(SUGGEST_LANG[TV.lang] || []), leagues = ["mma/ufc", "cricket/sri-lanka"];
         SPORTS.forEach(function (sp) { sp.leagues.forEach(function (lg) { if (want.indexOf(lg[0]) >= 0) leagues.push(sp.id + "/" + lg[0]); }); });
-        return { sports: ["soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [] };
+        return { sports: ["mma", "cricket", "soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [] };
     }
     var SPORT_ICONS = {
+        mma: '<path d="M6 9V5a2 2 0 014 0v4-5a2 2 0 014 0v5-4a2 2 0 014 0v4-2a2 2 0 014 0v8l-5 6H9L3 14a2 2 0 013-3l3 2"/>',
+        cricket: '<path d="M4 20L18 6l-4-4L2 14zM16 19h6M18 17v5M21 17v5"/><circle cx="6" cy="5" r="2"/>',
         soccer: '<circle cx="12" cy="12" r="9"/><path d="M12 7.2l3.8 2.8-1.4 4.4H9.6L8.2 10z"/><path d="M12 3v4.2M15.8 10l4.6-1.6M14.4 14.4l2.8 3.8M9.6 14.4l-2.8 3.8M8.2 10L3.6 8.4"/>',
         rugby: '<ellipse cx="12" cy="12" rx="9.5" ry="5.6" transform="rotate(-38 12 12)"/><path d="M8.6 15.4l6.8-6.8M10.2 11.4l2.4 2.4M11.8 9.8l2.4 2.4"/>',
         basketball: '<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3v18M5.7 5.7c3.4 3.2 3.4 9.4 0 12.6M18.3 5.7c-3.4 3.2-3.4 9.4 0 12.6"/>',
