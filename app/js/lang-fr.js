@@ -1,11 +1,22 @@
 /* ============================================================
    lang-fr.js: French text of the interface (see js/i18n.js).
    Each key is the English text exactly as written in the code;
-   {
-    "Cricket": "Cricket",
-name} placeholders stay as they are.
+   {name} placeholders stay as they are.
    ============================================================ */
 window.TV_LANG_FR = {
+    "Live & Upcoming": "En direct et à venir",
+    "No upcoming events in your selections.": "Aucun événement à venir dans tes sélections.",
+    "All UFC Events": "Tous les événements UFC",
+    "Numbered Events": "Événements numérotés",
+    "Fight Nights": "Fight Nights",
+    "Cricket": "Cricket",
+    "MMA": "MMA",
+    "International Cricket": "Cricket international",
+    "Fight Card": "Carte des combats",
+    "Main Card": "Carte principale",
+    "Prelims": "Préliminaires",
+    "Early Prelims": "Premiers préliminaires",
+    "Fight card not available yet.": "Carte des combats pas encore disponible.",
     /* 1.0.11: Stream Info, Quality, Audio */
     "Press OK for the sound": "Appuie sur OK pour le son",
     "Paused · OK to play": "En pause · OK pour reprendre",

@@ -21,8 +21,8 @@
        [ESPN's name, the name shown, kind: i national teams, w women, f friendlies, the group] */
     var CUSTOM = global.APL_CUSTOM_SPORTS;
     var SPORTS = [
-        { id: "mma", label: "UFC", leagues: [CUSTOM.leagues.mma] },
-        { id: "cricket", label: "Cricket", leagues: [CUSTOM.leagues.cricket] },
+        { id: "mma", label: "MMA", leagues: CUSTOM.promotions },
+        { id: "cricket", label: "Cricket", leagues: CUSTOM.cricket },
         { id: "soccer", label: US ? "Soccer" : "Football", leagues: [
             ["uefa.champions", "Champions League", "", "European Cups"], ["uefa.europa", "Europa League", "", "European Cups"],
             ["uefa.europa.conf", "Conference League", "", "European Cups"], ["uefa.super_cup", "UEFA Super Cup", "", "European Cups"],
@@ -89,12 +89,15 @@
         var f = chosen();
         if (!f) return !kind(lg, "w") && !kind(lg, "x") && lg[0] !== "club.friendly";
         if (f.sports.indexOf(sp.id) < 0 || f.leagues.indexOf(sp.id + "/" + lg[0]) < 0) return false;
+        if (sp.id === "mma") return true;
+        if (sp.id === "cricket") return !!f.types.men || !!f.types.women;
         if (kind(lg, "w") ? !f.types.women : !f.types.men) return false;
         return !kind(lg, "f") || !!f.types.friendly;
     }
     function favTeam(t, sport) {
         var f = chosen();
         if (!f || !t) return false;
+        if (sport === "cricket") return CUSTOM.favTeam(t, f.teams);
         for (var i = 0; i < f.teams.length; i++) if (f.teams[i].s === sport && String(f.teams[i].id) === String(t.id)) return true;
         return false;
     }
@@ -117,7 +120,7 @@
     function espnDay(t) { var d = new Date(t - 5 * 3600000); return d.getUTCFullYear() + pad(d.getUTCMonth() + 1) + pad(d.getUTCDate()); }
     function dayStart(offset) { var d = new Date(); d.setHours(0, 0, 0, 0); d.setDate(d.getDate() + offset); return d.getTime(); }
     // What is shown: today, tomorrow, or what comes next (the two weeks after)
-    function span() { if (dayOff === "next") return [dayStart(2), dayStart(16)]; if (dayOff === "past") return [dayStart(-7), dayStart(0)]; var f = dayStart(dayOff); return [f, dayStart(dayOff + 1)]; }
+    function span() { if (dayOff === 0) return [dayStart(0), dayStart(16)]; if (dayOff === "next") return [dayStart(2), dayStart(16)]; if (dayOff === "past") return [dayStart(-7), dayStart(0)]; var f = dayStart(dayOff); return [f, dayStart(dayOff + 1)]; }
     function espnDaysIn(from, to) {
         var out = [], seen = {};
         for (var t = from - 3600000; t < to + 3600000; t += 6 * 3600000) { var d = espnDay(t); if (!seen[d]) { seen[d] = 1; out.push(d); } }
@@ -309,7 +312,7 @@
     function scheduleUrl(t, past) {
         var sp = sportOf(t.s);
         if (String(t.id).indexOf("365-") === 0) return S365 + "games/" + (past ? "results" : "fixtures") + "/?" + q365() + "&competitors=" + String(t.id).slice(4);
-        if (!sp || sp.all || !t.l) return "";                               // rugby: ESPN gives no team schedule
+        if (!sp || sp.all || t.s === "cricket" || t.s === "mma" || !t.l) return "";                               // rugby: ESPN gives no team schedule
         return API + t.s + "/" + (t.s === "soccer" ? "all" : t.l.split("/")[1]) + "/teams/" + t.id + "/schedule" + (t.s === "soccer" && !past ? "?fixture=true" : "");
     }
     // past: the season's results (football's schedule gives the fixtures to come only)
@@ -560,6 +563,11 @@
 
     /* Every alias, by its first word: a text only needs its own words looked up */
     function aliasInto(idx, m) {
+        if (m.sport === "mma") {
+            var numbered = /\bUFC\s*(\d+)\b/i.exec(m.eventTitle || "");
+            var title = numbered ? "ufc " + numbered[1] : strip(m.eventTitle || "");
+            if (title) (idx["w:" + title.split(" ")[0]] = idx["w:" + title.split(" ")[0]] || []).push({ a: " " + title + " ", m: m, side: 3 });
+        }
         [[m.home, 1], [m.away, 2]].forEach(function (p) {
             aliases(p[0], m.sport).forEach(function (a) {
                 var w = "w:" + a.split(" ")[0];
@@ -737,7 +745,7 @@
         var cat = D.catalog(), tok = ++findTok;
         var seenIds = {}, pool = matches.concat(mine, sheet.open && sheet.m ? [sheet.m] : []).filter(function (m) { if (seenIds[m.id]) return false; seenIds[m.id] = 1; return true; });
         var ms = pool.filter(function (m) {
-            return m.state !== "post" && !/CANCEL|POSTPONED|ABANDON/.test(m.status) && (m.start < guideEnd() || ((tvOf(m).length || tvRights(m)) && m.start < Date.now() + 17 * 86400000)) && Date.now() - m.start < 5 * 3600000;
+            return m.state !== "post" && !/CANCEL|POSTPONED|ABANDON/.test(m.status) && (m.start < guideEnd() || ((tvOf(m).length || tvRights(m)) && m.start < Date.now() + 17 * 86400000)) && Date.now() - m.start < (m.sport === "mma" ? 12 : 5) * 3600000;
         });
         if (!cat || !ms.length) { ms.forEach(function (m) { where[m.id] = { langs: {}, order: [], n: 0 }; }); refreshShown(); return; }
         finding = true;
@@ -1033,7 +1041,7 @@
         return "#" + h(rc[0]) + h(rc[1]) + h(rc[2]);
     }
     function split(a, b, angle) { var cs = colours(a, b), c1 = shade(cs[0], 0.82), c2 = shade(cs[1], 0.82); return "linear-gradient(" + (angle || 112) + "deg, " + c1 + " 0%, " + c1 + " 50%, " + c2 + " 50%, " + c2 + " 100%)"; }
-    function names2(m) { var two = sides(m); return shown(two[0], false) + (awayFirst(m) ? " @ " : " – ") + shown(two[1], false); }
+    function names2(m) { if (m.isEvent) return m.eventTitle; var two = sides(m); return shown(two[0], false) + (awayFirst(m) ? " @ " : " – ") + shown(two[1], false); }
     function onAnotherDay(m) { var s = span(); return m.state === "pre" && (dayOff === "next" || m.start < s[0] || m.start >= s[1]) && !/CANCEL|POSTPONED/.test(m.status); }
     // dated: the row mixes days (My Teams in what comes next); a day's row says its time only
     function badge(m, dated) {
@@ -1043,8 +1051,10 @@
     }
     function leagueLogo(m, size) { var u = logos[m.lkey]; return u ? "<i class='mc__lg' style='background-image:" + esc(crestBg(u, size || 48)) + "'></i>" : ""; }
     function makeCard(m, withLeague, dated) {
+        if (m.sport === "mma") return CUSTOM.card(m, { status: statusOf });
         var c = el("div", "card mc"), art = el("div", "card__art mc__art"), cap = el("div", "mc__cap"), sub = el("div", "mc__sub");
         c.appendChild(art); c.appendChild(cap); c.appendChild(sub);
+        if (m.sport === "cricket") c.classList.add("cricket-card");
         c._m = m;
         /* Apple TV's game tile: the two clubs' colours split on a slant, a jersey's mesh over them. Before the match
            the crests in their halves and the time in a dark capsule; in play and after, Apple's scoreboard across
@@ -1094,6 +1104,7 @@
         if (im.decode) im.decode().then(done, done); else { im.onload = done; im.onerror = done; }
     }
     function photoNow(m) {
+        if (m.sport === "mma") return CUSTOM.artNow(m);
         var d = details[m.id] && details[m.id].d, v = venueKey(m), c = v && venuePics[v];
         if (m.state === "post" && d && d.photo) return { u: d.photo, by: T("Photo: ESPN") };
         if (!v) return null;
@@ -1103,6 +1114,7 @@
     var VENUE_WORD = / (stadium|stade|stadio|estadio|estadi|stadion|arena|park|parc|center|centre|field|ground|road|bowl|dome|garden|coliseum|velodrome) /;
     function venueKey(m) { return m.venue ? S.fold(m.venue + (m.city ? " " + m.city : "")) : ""; }
     function photoOf(m) {
+        if (m.sport === "mma") return CUSTOM.artwork(m);
         var v = m.venue, k = venueKey(m), c = k && venuePics[k];
         if (!k) return Promise.resolve(null);
         if (c && Date.now() - c.at < 30 * 86400000) return Promise.resolve(c.u ? { u: c.u, by: T("Photo: Wikipedia") } : null);
@@ -1153,16 +1165,11 @@
     }
     function longDay(t) { try { var s = new Date(t).toLocaleDateString(TV.locale, { weekday: "long", day: "numeric", month: "long" }); return s.charAt(0).toUpperCase() + s.slice(1); } catch (e) { return TV.dayName(new Date(t)); } }
     function featured() {
-        var favs = mine.filter(ofSport).filter(function (m) { return m.state !== "post" && !stale(m) && !/CANCEL|POSTPONED/.test(m.status); });
-        var list = favs.filter(isLive).concat(favs.filter(function (m) { return !isLive(m); }).sort(byTime)), ours = true;
-        if (!list.length) {
-            ours = false;
-            var day = shownList().filter(function (m) { return !/CANCEL|POSTPONED/.test(m.status); });
-            list = day.filter(isLive).concat(day.filter(function (m) { return m.state === "pre"; }).sort(byTime));
-        }
-        var ufc = shownList().filter(function (m) { return m.sport === "mma" && m.state !== "post" && !stale(m) && !/CANCEL|POSTPONED/.test(m.status); }).sort(byRank);
-        if (ufc.length) list = ufc.concat(list.filter(function (m) { return m.sport !== "mma"; }));
-        return { list: list.slice(0, 6), ours: ufc.length ? false : ours };
+        var seen = {}, list = mine.filter(ofSport).concat(shownList()).filter(function (m) {
+            if (seen[m.id] || m.state === "post" || stale(m) || /CANCEL|POSTPONED/.test(m.status)) return false;
+            seen[m.id] = true; return true;
+        }).sort(CUSTOM.compare);
+        return { list: list.slice(0, 6), ours: false };
     }
     function Hero(f) {
         this.root = el("div", "sh"); this.items = f.list; this.ours = f.ours; this.index = 0; this.active = false; this.t0 = Date.now();
@@ -1212,7 +1219,7 @@
                : w.n ? list.slice(0, 3).map(function (x) { return x.ch.name; }).join(", ") + (list.length > 3 ? " +" + (list.length - 3) : "") + " · " + langName(w.order[0]) +
                                  (w.order.length > 1 ? " · " + T("Also in {langs}", { langs: w.order.slice(1, 4).map(langName).join(", ") }) : "")
                            : w.net ? T("On {net} where you live", { net: w.net }) : farAhead(m) ? T("The channel comes with your TV guide, the day before.") : T("Not in your lists");
-        var score = m.state !== "pre" && !/CANCEL|POSTPONED/.test(m.status);
+        var score = m.sport !== "mma" && m.state !== "pre" && !/CANCEL|POSTPONED/.test(m.status);
         /* Apple TV's hero: the whole width, under the menu and the tabs; the two clubs' colours on a slant with the
            jersey's mesh, the crests and the score or the time on the right, the text at the bottom left, one white
            capsule and a round glass button, the dots in the middle at the bottom. */
@@ -1251,7 +1258,7 @@
         for (var sid in this.slides) if (Object.prototype.hasOwnProperty.call(this.slides, sid)) this.slides[sid].classList.toggle("is-on", sid === String(m.id));
         this.fgEl.innerHTML = "<div class='sh__txt'><div class='sh__cap'>" + pill + leagueLogo(m, 64) + "<span>" + esc(T(m.league[1]) + (m.note ? " · " + m.note : "")) + "</span>" +
                 (this.ours ? "<span class='sh__ours'>" + TV.icon("star", 22) + esc(T("My Teams")) + "</span>" : "") + "</div>" +
-            line(two[0]) + line(two[1]) +
+            (m.isEvent ? "<h1 class='mma-hero-title'>" + esc(m.eventTitle) + "</h1><p class='mma-hero-card'>" + esc(m.bouts.length + " bouts") + "</p>" : line(two[0]) + line(two[1])) +
             (meta ? "<div class='sh__meta'>" + esc(meta) + "</div>" : "") +
             "<div class='sh__tv'>" + (w && w.n ? TV.icon("tv", 26) : "") + "<span>" + esc(tv) + "</span></div>" +
             "<div class='sh__btns'></div></div>" +
@@ -1262,7 +1269,7 @@
         this.acts = [];
         function btn(html, run, cls) { var b = el("div", "btn " + cls, html); box.appendChild(b); tiles.push(b); self.acts.push(run); }
         // one capsule (watch it, else its page) and, next to "Watch", a round glass button for the page
-        if (list.length && soon) {
+        if (list.length && soon && !m.isEvent) {
             btn(TV.icon("play", 28) + esc(T("Watch on {name}", { name: list[0].ch.name })), function () { var chs = list.map(function (x) { return x.ch; }); TV.live.play(chs[0], chs); }, "btn--primary");
             btn(TV.icon("info", 30), function () { openMatch(m); }, "btn--round sh__round");
         } else btn(TV.icon("info", 28) + esc(T("Match Details")), function () { openMatch(m); }, "btn--primary");
@@ -1300,7 +1307,7 @@
         var at = chipNav.current() ? chipNav.index : -1;
         // Your favourites first; then the calendar; then ONE chip for the sports (the one you are on), which opens them
         // in a list: eight chips of sports went off the screen
-        chipDefs = [{ favs: true, label: T("Favorites") }, { day: "past", label: T("Results"), first: true }, { day: 0, label: T("Today") }, { day: 1, label: T("Tomorrow") }, { day: "next", label: T("Upcoming") },
+        chipDefs = [{ favs: true, label: T("Favorites") }, { day: "past", label: T("Results"), first: true }, { day: 0, label: T("Live & Upcoming") }, { day: 1, label: T("Tomorrow") }, { day: "next", label: T("Upcoming") },
                     { cal: true, label: isCalDay() ? shortDay(dayStart(dayOff)) : T("Calendar") }];
         var sports = SPORTS.filter(function (sp) { return count(sp.id) > 0; });
         if (sportId !== "all" && !sports.some(function (sp) { return sp.id === sportId; })) sportId = "all";
@@ -1347,7 +1354,7 @@
     function sigNow() { return signature(shownList()) + "|" + signature(mine.filter(ofSport)) + "|" + sportId + "|" + dayOff; }
     // In play first, then what comes, then what is over (hidden if you chose so)
     function rank(m) { return isLive(m) ? 0 : m.state === "pre" ? 1 : 2; }
-    function byRank(a, b) { return CUSTOM.priority(a) - CUSTOM.priority(b) || rank(a) - rank(b) || byTime(a, b); }
+    function byRank(a, b) { return CUSTOM.compare(a, b); }
     function drawRows() {
         var was = strips[zone], wasKey = was && was.key, wasId = was && was.current() && was.current().id;
         var list = shownList();
@@ -1357,17 +1364,18 @@
         if (!list.length && !my.length) {
             if (loading) { msg("", true); zone = -1; paint(); return; }
             msg(failed ? T("The scores can't be reached right now. Check the connection, then try again.") :
-                dayOff === 0 ? T("No matches today in these leagues.") : dayOff === "next" ? T("No matches coming up in your competitions.") : dayOff === "past" ? T("No results this week in your competitions.") : T("No matches that day in these leagues."));
+                dayOff === 0 ? T("No upcoming events in your selections.") : dayOff === "next" ? T("No matches coming up in your competitions.") : dayOff === "past" ? T("No results this week in your competitions.") : T("No matches that day in these leagues."));
             zone = -1; paint(); return;
         }
         msg("");
         var f = featured();
         if (f.list.length) { var h = new Hero(f); strips.push(h); rowsEl.appendChild(h.root); }
         if (dayOff === "past") my.sort(function (a, b) { return b.start - a.start; });
-        var ufcRow = list.filter(function (m) { return m.sport === "mma"; }).sort(byRank);
-        if (ufcRow.length) {
-            addRow("mma/ufc", "UFC", ufcRow, true, "", "", dayOff === "next" || dayOff === "past");
-            list = list.filter(function (m) { return m.sport !== "mma"; });
+        if (dayOff !== "next" && dayOff !== "past") {
+            var live = list.filter(isLive).sort(byRank), upcoming = list.filter(function (m) { return m.state === "pre"; }).sort(byRank);
+            if (live.length) addRow("live", T("Live Now"), live, true, "", "live");
+            if (upcoming.length) addRow("upcoming", T("Upcoming"), upcoming, true, "", "", dayOff === 0);
+            list = list.filter(function (m) { return m.state === "post"; });
         }
         if (my.length) addRow("mine", T("My Teams"), my, true, "", "star", dayOff === "next" || dayOff === "past");
         // What comes next: a calendar, one row a day
@@ -1376,14 +1384,12 @@
             list.forEach(function (m) { var d = new Date(m.start); d.setHours(0, 0, 0, 0); var k = d.getTime(); if (!byDay[k]) { byDay[k] = []; keys.push(k); } byDay[k].push(m); });
             keys.sort(function (a, b) { return back ? b - a : a - b; }).forEach(function (k) {
                 // the day's matches by the competitions' order (Ligue 1 before the friendlies), then by time
-                var l = byDay[k].sort(function (a, b) { return leagueRank(a) - leagueRank(b) || byTime(a, b); });
+                var l = byDay[k].sort(byRank);
                 addRow("d" + k, longDay(k), l, true, l.length > 1 ? T("{n} matches", { n: l.length }) : T("1 match"));
             });
             restore(wasKey, wasId);
             return;
         }
-        var live = list.filter(isLive).sort(byRank);
-        if (live.length) addRow("live", T("Live Now"), live, true, "", "live");
         var by = {};
         list.forEach(function (m) { if (activeKey(m)) (by[m.lkey] = by[m.lkey] || []).push(m); });
         SPORTS.forEach(function (sp) {
@@ -1479,11 +1485,11 @@
     /* The day's matches, every league at once (six requests at a time). quiet: a refresh, nothing redrawn
        unless a match came, went or started. */
     function load(fresh) {
-        var tok = ++loadTok, sp0 = span(), from = sp0[0], to = sp0[1], days = espnDaysIn(from, to), jobs = [], ahead = dayOff === "next" || dayOff === "past" || isCalDay(), t0 = Date.now();
+        var tok = ++loadTok, sp0 = span(), from = sp0[0], to = sp0[1], days = espnDaysIn(from, to), jobs = [], ahead = dayOff === 0 || dayOff === "next" || dayOff === "past" || isCalDay(), t0 = Date.now();
         loading = true;
         if (fresh) { failed = false; mine = []; drawRows(); }
         function ask(sp, lg) {
-            if (sp.id === "mma" || sp.id === "cricket") { jobs.push(CUSTOM.range(sp.id, from, to, limited, readEvent).then(null, function () { return null; })); return; }
+            if (sp.id === "mma" || sp.id === "cricket") { jobs.push(CUSTOM.range(sp.id, from, to, limited, readEvent, lg, chosen()).then(null, function () { return null; })); return; }
             if (is365(lg)) { jobs.push(range365(sp, lg, from, to).then(null, function () { return null; })); return; }
             if (!ahead || !lg) { days.forEach(function (d) { jobs.push(league(sp, lg, d).then(null, function () { return null; })); }); return; }
             // what comes next, the results, a calendar's day: the month (or the two months) at once
@@ -1493,6 +1499,12 @@
         SPORTS.forEach(function (sp) {
             if (sp.all) { if (sp.leagues.some(function (lg) { return follows(sp, lg); }) || hasTeams(sp.id)) ask(sp, null); return; }
             sp.leagues.forEach(function (lg) { if (follows(sp, lg)) { asked0[sp.id + "/" + lg[0]] = 1; ask(sp, lg); } });
+        });
+        var followed = chosen();
+        if (followed) followed.teams.filter(function (t) { return t.s === "cricket"; }).forEach(function (t) {
+            var sp = sportOf("cricket"), slug = t.nat ? "international" : String(t.l).split("/")[1];
+            var lg = sp.leagues.filter(function (l) { return l[0] === slug; })[0];
+            if (lg && !asked0["cricket/" + slug]) { asked0["cricket/" + slug] = 1; ask(sp, lg); }
         });
         return warmSchedules().then(function () {
             teamLeagues().forEach(function (x) { if (!asked0[x.sp.id + "/" + x.lg[0]]) { asked0[x.sp.id + "/" + x.lg[0]] = 1; ask(x.sp, x.lg); } });
@@ -1566,11 +1578,14 @@
             var sp = sportOf(m.sport), k = m.lkey + "|" + espnDay(m.start);
             if (!sp || ask[k]) return;
             ask[k] = 1;
-            jobs.push((is365(m.league) ? range365(sp, m.league, dayStart(0), dayStart(1)) : league(sp, m.league, espnDay(m.start))).then(null, function () { return null; }));
+            var request = m.sport === "mma" || m.sport === "cricket"
+                ? CUSTOM.range(m.sport, span()[0], span()[1], limited, readEvent, m.league, chosen())
+                : is365(m.league) ? range365(sp, m.league, dayStart(0), dayStart(1)) : league(sp, m.league, espnDay(m.start));
+            jobs.push(request.then(null, function () { return null; }));
         });
         if (!jobs.length) return;
         Promise.all(jobs).then(function (lists) {
-            lists.forEach(function (l) { (l || []).forEach(function (m) { if (store[m.id]) keep(m); }); });
+            lists.forEach(function (l) { (l || []).forEach(function (m) { if (store[m.id]) keep(m); if (m.bouts) m.bouts.forEach(function (b) { if (sheet.m && sheet.m.id === b.id) sheet.m = b; }); }); });
             if (!visible && !sheet.open) return;
             if (sigNow() !== shownSig) { drawBar(); drawRows(); findSoon(1500); } else refreshShown();
         });
@@ -2043,11 +2058,13 @@
     }
 
     function openMatch(m) {
+        if (m.isEvent) return CUSTOM.openEvent(m, { card: makeCard, openBout: openMatch, current: function (id) { return store[id]; } });
         var r = TV.$("match");
         if (!r) return;
         ytDrop();
         sheet.m = m; sheet.lang = ""; sheet.zone = "btns"; sheet.open = true; sheet.el = r; sheet.tab = ""; sheet.tabIndex = 0; sheet.t0 = Date.now(); sheet.told = {};
         r.innerHTML = "";
+        r.classList.toggle("is-cricket", m.sport === "cricket");
         r.classList.add("is-open");
         TV.pushNav(sheetScreen);
         sheet.draw(true);
@@ -2094,7 +2111,7 @@
         var inn = el("div", "match__in");
         r.appendChild(inn);
         inn.appendChild(el("div", "match__kicker", leagueLogo(m, 64) + "<span>" + esc([T(m.league[1]), m.note].filter(Boolean).join(" · ")) + "</span>"));
-        var score = m.state !== "pre" && !/CANCEL|POSTPONED/.test(m.status);
+        var score = m.sport !== "mma" && m.state !== "pre" && !/CANCEL|POSTPONED/.test(m.status);
         var board = el("div", "match__board");
         function side(t, k) {
             var goals = d ? d.scorers[t === m.home ? "h" : "a"] : [];
@@ -2350,6 +2367,7 @@
     var teamLists = {};
     var teamCache = {};
     function teamsOf(sportId, slug) {
+        if (sportId === "cricket") return CUSTOM.clubTeams(slug, limited).then(function (list) { teamCache[sportId + "/" + slug] = list; return list; });
         var k = sportId + "/" + slug;
         if (String(slug).indexOf("s365:") === 0) {
             if (!teamLists[k]) teamLists[k] = limited(function () { return TV.fetchJSON(S365 + "standings/?" + q365() + "&competitions=" + slug.slice(5), { timeout: 15000 }); }).then(function (j) {
@@ -2427,6 +2445,7 @@
     }
     var nationLists = {};
     function nationsOf(sportId) {
+        if (sportId === "cricket") return Promise.resolve(CUSTOM.nationalTeams());
         if (nationLists[sportId]) return nationLists[sportId];
         var lists = NATION_LISTS[sportId];
         nationLists[sportId] = Promise.all(lists.map(function (x) { return teamsOf(sportId, x[0]).then(null, function () { return null; }); })).then(function (all) {
@@ -2451,9 +2470,9 @@
     function draftOf() {
         var f = chosen();
         if (f) return JSON.parse(JSON.stringify(f));
-        var want = SUGGEST.concat(SUGGEST_LANG[TV.lang] || []), leagues = ["mma/ufc", "cricket/sri-lanka"];
+        var want = SUGGEST.concat(SUGGEST_LANG[TV.lang] || []), leagues = [];
         SPORTS.forEach(function (sp) { sp.leagues.forEach(function (lg) { if (want.indexOf(lg[0]) >= 0) leagues.push(sp.id + "/" + lg[0]); }); });
-        return { sports: ["mma", "cricket", "soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [], customSportsVersion: 1 };
+        return { sports: ["soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [], customSportsVersion: 2 };
     }
     var SPORT_ICONS = {
         mma: '<path d="M6 9V5a2 2 0 014 0v4-5a2 2 0 014 0v5-4a2 2 0 014 0v4-2a2 2 0 014 0v8l-5 6H9L3 14a2 2 0 013-3l3 2"/>',
@@ -2619,7 +2638,7 @@
                 // a pause in the typing first: one request for the word, not one per letter
                 setTimeout(function () {
                     if (tok !== setup.tok || !setup.open) return;
-                    var jobs = [findTeams(setup.q)], sps = step === 3 ? ["soccer", "rugby"].filter(function (s) { return d.sports.indexOf(s) >= 0 || s === "soccer"; }) : [];
+                    var jobs = [findTeams(setup.q)], sps = step === 3 ? ["soccer", "rugby", "cricket"].filter(function (s) { return d.sports.indexOf(s) >= 0 || s === "soccer"; }) : [];
                     sps.forEach(function (s) { jobs.push(nationsOf(s).then(null, function () { return []; })); });
                     Promise.all(jobs).then(function (rs) {
                         if (tok !== setup.tok || !setup.open) return;
@@ -2654,14 +2673,23 @@
             // a chip per country or region, and per sport: straight to its competitions
             all.forEach(function (x) { var g = groupOf(x); if (g !== last) { last = g; groups.push([x.lg[3] ? T(x.lg[3]) : T(x.sp.label), g]); } });
             groups.forEach(function (gp) { chip(esc(gp[0]), false, function () { var at = firstOf[gp[1]]; if (at !== undefined && setup.nav) { TV.sound.tick(); setup.nav.focus(at); } }); });
+            if (d.sports.indexOf("mma") >= 0) {
+                [["all", T("All UFC Events")], ["numbered", T("Numbered Events")], ["fight-night", T("Fight Nights")]].forEach(function (option) {
+                    chip(esc(option[1]), (d.ufcEventType || "all") === option[0], function () {
+                        d.ufcEventType = option[0];
+                        if (d.leagues.indexOf("mma/ufc") < 0) d.leagues.push("mma/ufc");
+                        drawSetup();
+                    });
+                });
+            }
             last = "";
             all.forEach(function (x) { var g = groupOf(x); if (g !== last) { last = g; head(g); } leagueTile(x, ""); });
             if (!all.length) empty(T("Choose a sport first."));
         } else {
             // Clubs: one competition at a time; national teams: football or rugby, by continent
             var opts = step === 2
-                ? stepLeagues().filter(function (x) { return d.leagues.indexOf(x.key) >= 0 && !kind(x.lg, "i") && !kind(x.lg, "f"); }).map(function (x) { return { key: x.key, label: T(x.lg[1]), sp: x.sp.id, slug: x.lg[0] }; })
-                : ["soccer", "rugby"].filter(function (s) { return d.sports.indexOf(s) >= 0; }).map(function (s) { return { key: s, label: T(sportOf(s).label), sp: s }; });
+                ? stepLeagues().filter(function (x) { return d.leagues.indexOf(x.key) >= 0 && x.sp.id !== "mma" && !kind(x.lg, "i") && !kind(x.lg, "f"); }).map(function (x) { return { key: x.key, label: T(x.lg[1]), sp: x.sp.id, slug: x.lg[0] }; })
+                : ["soccer", "rugby", "cricket"].filter(function (s) { return d.sports.indexOf(s) >= 0; }).map(function (s) { return { key: s, label: T(sportOf(s).label), sp: s }; });
             var cur = opts.filter(function (o) { return o.key === setup.sub[step]; })[0] || opts[0];
             if (cur) setup.sub[step] = cur.key;
             searchChip();

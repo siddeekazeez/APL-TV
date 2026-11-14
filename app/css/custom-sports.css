@@ -1,0 +1,25 @@
+/* Event artwork and remote-friendly MMA card navigation. */
+.mma-card .mc__art { background-position: center; background-size: cover; }
+.mma-card__brand { position: absolute; left: 22px; top: 22px; padding: 7px 12px; border-radius: 9px; background: rgba(0,0,0,.65); font-size: 23px; font-weight: 800; }
+.mma-card__title { position: absolute; left: 24px; right: 24px; bottom: 60px; font-size: 35px; line-height: 1.1; }
+.mma-hero-title { margin: 20px 0; max-width: 1100px; font-size: 82px; line-height: 1.05; letter-spacing: -2px; }
+.mma-hero-card { font-size: 28px; color: rgba(255,255,255,.8); }
+.mma-event { position: fixed; inset: 0; z-index: 24; background: #080b12; }
+.mma-event__background { position: absolute; inset: 0; background-position: center top; background-size: cover; opacity: .32; }
+.mma-event__background::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg,rgba(8,11,18,.15),#080b12 750px); }
+.mma-event__scroll { position: absolute; inset: 0; padding: 55px 90px 100px; overflow-y: auto; }
+.mma-event__back { display: inline-flex; margin: 15px 0 40px; }
+.mma-event__promotion { font-size: 26px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; }
+.mma-event__title { font-size: 80px; line-height: 1.05; margin: 18px 0; max-width: 1400px; }
+.mma-event__meta { font-size: 27px; color: rgba(255,255,255,.75); margin-bottom: 55px; }
+.mma-event__section { font-size: 36px; margin: 35px 0 28px; }
+.mma-event__grid { display: flex; flex-wrap: wrap; gap: 45px; padding: 18px 20px 30px; }
+.mma-event__grid .card { position: relative; flex: 0 0 500px; width: 500px; height: 365px; }
+.mma-event__grid .card__art { width: 500px; height: 280px; }
+.mma-event__grid .mc__cap { font-size: 27px; margin-top: 15px; white-space: normal; }
+.mma-event__grid .mc__sub { font-size: 23px; }
+
+.is-fullscreen .mma-event { display: none; }
+.cricket-card .mc__board > b { font-size: 26px; white-space: normal; overflow-wrap: anywhere; max-width: 95px; }
+.is-cricket .match__score { font-size: 42px; letter-spacing: 0; flex-wrap: wrap; justify-content: center; }
+.is-cricket .match__score span { font-size: 30px; }

@@ -88,7 +88,7 @@ jobs:
           cat > "$RUNNER_TEMP/notes.md" <<'NOTES'
           Custom Android build of [APL TV by Knikt (Gero Corp.)](https://github.com/Knikt/APL-TV), distributed under its original MIT license.
 
-          Changes: UFC bouts and highest sports priority; Sri Lanka senior international cricket; existing favorites retained; separate Android app named APL TV Sports. See CUSTOMIZATIONS.md for data coverage and limitations.
+          Changes: MMA promotions, event pages and complete fight cards; individual/event artwork fallback; cricket national teams and seven franchise leagues; live-first chronological ordering; existing favorites migrated; separate Android app named APL TV Sports. See CUSTOMIZATIONS.md for data coverage and limitations.
 
           Install apl-tv-sports-android.apk. Later builds use the same signing key and preserve this custom app's settings. The official app remains separate. No channels, providers or playlists are included.
           NOTES

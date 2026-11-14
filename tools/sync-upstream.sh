@@ -19,6 +19,6 @@ if ! git merge --no-commit --no-ff "refs/tags/upstream/$tag"; then
         esac
     done < <(git diff --name-only --diff-filter=U)
 fi
-python3 tools/make-build.py --notes 'UFC priority and Sri Lanka cricket; updated from Knikt/APL-TV.'
+python3 tools/make-build.py --notes 'MMA events, cricket teams and live-first ordering; updated from Knikt/APL-TV.'
 git add app/js/build.js app/version.json app/css/tv2.css
 git commit -m "Merge Knikt/APL-TV $tag while retaining custom sports"

@@ -20,7 +20,7 @@ SCRIPTS = [
     "js/custom-sports.js", "js/sports.js", "js/vod.js", "js/library.js", "js/detail.js", "js/person.js", "js/search.js", "js/settings.js", "js/multiview.js", "js/osd.js", "js/voice.js",
     "js/saver.js", "js/updater.js", "js/app.js",
 ]
-STYLES = ["css/tv.css", "css/tv2.css"]
+STYLES = ["css/tv.css", "css/custom-sports.css", "css/tv2.css"]
 LOADER = 1           # raise it when boot.js changes: the screens then ask for APL Launcher Setup, once
 REINSTALL = "1.0.1"  # minimum installed version: raise it when config.xml or service/service.js change
 

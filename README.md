@@ -2,7 +2,7 @@
 
 Based on **[APL TV by Knikt (Gero Corp.)](https://github.com/Knikt/APL-TV)**. All credit for the original player, interface, platform support and existing sports system belongs to the original developer and contributors. This is an independent fork, not an official release or endorsement.
 
-**Our additions:** UFC bouts, UFC first in the sports banner and rows, Sri Lanka senior international cricket (Tests, ODIs, T20Is), and a workflow that checks for upstream releases daily and publishes a signed Android build after checks pass. Existing sports favorites are retained. Original copyright and MIT license are preserved in [LICENSE](LICENSE).
+**Our additions:** integrated MMA events (UFC and PFL), full fight-card pages, individual artwork with event-artwork fallback, cricket national teams and seven franchise leagues, and live-first chronological browsing. Existing selections are migrated. The signed Android build workflow checks upstream releases daily. Original copyright and MIT license are preserved in [LICENSE](LICENSE).
 
 - [Download the latest custom Android APK](https://github.com/siddeekazeez/APL-TV/releases/latest)
 - [Changes, update process, tests and limitations](CUSTOMIZATIONS.md)
