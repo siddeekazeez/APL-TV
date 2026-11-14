@@ -8,7 +8,7 @@ Based on **[APL TV by Knikt (Gero Corp.)](https://github.com/Knikt/APL-TV)**. Al
 - [Changes, update process, tests and limitations](CUSTOMIZATIONS.md)
 - [Custom build and update workflow](https://github.com/siddeekazeez/APL-TV/actions/workflows/release.yml)
 
-The Android app is **APL TV Sports** (`com.siddeekazeez.apltv`) and installs alongside the official app. It has separate settings. You can export/import APL TV settings using the app's supported backup tools; never post a backup containing provider credentials on GitHub. No channels or providers are supplied.
+The Android app is **APL TV Sports** (`com.siddeekazeez.apltv`) and installs alongside the official app. It has separate settings. Configure your provider and preferences in the custom app; the official app's private settings do not transfer automatically. Never post provider credentials on GitHub. No channels or providers are supplied.
 
 ---
 
