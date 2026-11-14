@@ -14,7 +14,7 @@
 .mma-event__meta { font-size: 27px; color: rgba(255,255,255,.75); margin-bottom: 55px; }
 .mma-event__section { font-size: 36px; margin: 35px 0 28px; }
 .mma-event__grid { display: flex; flex-wrap: wrap; gap: 45px; padding: 18px 20px 30px; }
-.mma-event__grid .card { position: relative; flex: 0 0 500px; width: 500px; height: 365px; }
+.mma-event__grid .card { position: relative; flex: 0 0 500px; width: 500px; height: 410px; scroll-margin: 35px 0 60px; }
 .mma-event__grid .card__art { width: 500px; height: 280px; }
 .mma-event__grid .mc__cap { font-size: 27px; margin-top: 15px; white-space: normal; }
 .mma-event__grid .mc__sub { font-size: 23px; }
