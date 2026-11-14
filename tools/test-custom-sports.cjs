@@ -42,6 +42,8 @@ assert.equal(cricket.length, 2);
 assert.equal(cricket[0].away.name, 'Sri Lanka');
 assert.equal(cricket[0].away.winner, false, 'the string false must not become a win');
 assert.equal(cricket[0].sourceLeague, '24704');
+assert.equal(cricket[0].women, false);
+assert.equal(cricket[1].women, true);
 assert.equal(custom.inSpan(cricket[0], Date.parse('2026-11-14'), Date.parse('2026-11-15')), true, 'a live Test remains visible after its first day');
 assert.equal(custom.inSpan({ ...cricket[0], state: 'post' }, Date.parse('2026-11-14'), Date.parse('2026-11-15')), false);
 const from = Date.parse('2026-11-14'), to = Date.parse('2026-11-30');

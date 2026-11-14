@@ -1523,6 +1523,8 @@
                 if (!l) return;
                 ok++;
                 l.forEach(function (m) {
+                    var selection = chosen();
+                    if (m.sport === "cricket" && selection && (m.women ? !selection.types.women : !selection.types.men)) return;
                     if (seen[m.id] || !CUSTOM.inSpan(m, from, to) || !(activeKey(m) || isFavMatch(m)) || stale(m)) return;
                     seen[m.id] = 1; out.push(keep(m));
                 });
@@ -2451,7 +2453,7 @@
         if (f) return JSON.parse(JSON.stringify(f));
         var want = SUGGEST.concat(SUGGEST_LANG[TV.lang] || []), leagues = ["mma/ufc", "cricket/sri-lanka"];
         SPORTS.forEach(function (sp) { sp.leagues.forEach(function (lg) { if (want.indexOf(lg[0]) >= 0) leagues.push(sp.id + "/" + lg[0]); }); });
-        return { sports: ["mma", "cricket", "soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [] };
+        return { sports: ["mma", "cricket", "soccer", "rugby", "basketball"].concat(US ? ["football", "hockey"] : []), types: { men: 1, women: 0, friendly: 1 }, leagues: leagues, teams: [], customSportsVersion: 1 };
     }
     var SPORT_ICONS = {
         mma: '<path d="M6 9V5a2 2 0 014 0v4-5a2 2 0 014 0v5-4a2 2 0 014 0v4-2a2 2 0 014 0v8l-5 6H9L3 14a2 2 0 013-3l3 2"/>',

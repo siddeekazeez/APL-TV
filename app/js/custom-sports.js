@@ -65,6 +65,7 @@
                 m.end = Date.parse(c.endDate || e.endDate) || m.start;
                 m.note = sport === "mma" ? e.name + (c.type && c.type.abbreviation ? " · " + c.type.abbreviation : "") : e.description || "";
                 if (sport === "cricket") {
+                    m.women = [8, 9, 10].indexOf(Number((c.class || {}).internationalClassId)) >= 0;
                     m.live = ((c.status || e.status || {}).type || {}).detail || "";
                     var home = c.competitors[0].homeAway === "away" ? c.competitors[1] : c.competitors[0];
                     var away = home === c.competitors[0] ? c.competitors[1] : c.competitors[0];
