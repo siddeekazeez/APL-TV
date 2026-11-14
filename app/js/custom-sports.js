@@ -8,7 +8,7 @@
         ["20921", "ILT20", "", "United Arab Emirates"], ["19943", "LPL", "", "Sri Lanka"]];
     var countries = [["Afghanistan", "40"], ["Australia", "2"], ["Bangladesh", "25"], ["England", "1"], ["India", "6"], ["Ireland", "29"],
         ["New Zealand", "5"], ["Pakistan", "7"], ["South Africa", "3"], ["Sri Lanka", "8"], ["West Indies", "4"], ["Zimbabwe", "9"],
-        ["Canada", "17"], ["Namibia", "28"], ["Nepal", "32"], ["Netherlands", "15"], ["Oman", "37"], ["Scotland", "30"], ["United Arab Emirates", "27"], ["United States of America", "11"]];
+        ["Canada", "17"], ["Namibia", "28"], ["Nepal", "33"], ["Netherlands", "15"], ["Oman", "37"], ["Scotland", "30"], ["United Arab Emirates", "27"], ["United States of America", "11"]];
     function fold(s) { return String(s || "").toLowerCase().replace(/women/g, "").replace(/[^a-z0-9]/g, ""); }
     function nationalTeams() { return countries.map(function (c) { return { id: "nation:" + fold(c[0]), name: c[0], short: c[0],
         logo: "https://a.espncdn.com/i/teamlogos/cricket/500/" + c[1] + ".png", l: "cricket/international", g: "" }; }); }

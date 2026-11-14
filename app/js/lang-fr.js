@@ -4,6 +4,7 @@
    {name} placeholders stay as they are.
    ============================================================ */
 window.TV_LANG_FR = {
+    "Round {n}": "Round {n}",
     "Live & Upcoming": "En direct et à venir",
     "No upcoming events in your selections.": "Aucun événement à venir dans tes sélections.",
     "All UFC Events": "Tous les événements UFC",

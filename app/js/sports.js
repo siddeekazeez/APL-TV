@@ -108,6 +108,8 @@
 
     /* ---------- the scores ---------- */
     var cache = {}, pending = {}, store = {}, logos = TV.load("sportsLogos", {}) || {};
+    CUSTOM.promotions.forEach(function (lg) { if (!logos["mma/" + lg[0]]) logos["mma/" + lg[0]] = "https://a.espncdn.com/i/teamlogos/leagues/500/" + lg[0] + ".png"; });
+    CUSTOM.cricket.slice(1).forEach(function (lg) { if (!logos["cricket/" + lg[0]]) logos["cricket/" + lg[0]] = "https://a.espncdn.com/i/leaguelogos/cricket/500/" + lg[0] + ".png"; });
     /* The French leagues' current logos (2024; public domain on Wikimedia Commons, drawn white for the dark screen):
        ESPN still has the old ones. In the code itself, so an automatic update brings them too. */
     var LOGO_NOW = {
@@ -414,6 +416,11 @@
         if (m.sport === "cricket" && m.live && m.state !== "pre") return { text: m.live, live: m.state === "in", done: m.state === "post" };
         if (/POSTPONED/.test(n)) return { text: T("Postponed"), done: m.state === "post" };
         if (/CANCEL|ABANDON/.test(n)) return { text: T("Cancelled"), done: true };
+        if (m.sport === "mma") {
+            if (m.state === "pre") return { text: TV.hhmm(m.start) };
+            if (m.state === "post") return { text: T("Final"), done: true };
+            return { text: m.isEvent ? T("Live") : [T("Round {n}", { n: m.period || 1 }), m.clock].filter(Boolean).join(" · "), live: true };
+        }
         if (m.state === "pre") return { text: TV.hhmm(m.start) };
         if (m.src === "365") return m.state === "in" ? { text: live365(m), live: true } : { text: T("Final"), done: true };
         if (m.state === "in") {
@@ -1272,7 +1279,7 @@
         if (list.length && soon && !m.isEvent) {
             btn(TV.icon("play", 28) + esc(T("Watch on {name}", { name: list[0].ch.name })), function () { var chs = list.map(function (x) { return x.ch; }); TV.live.play(chs[0], chs); }, "btn--primary");
             btn(TV.icon("info", 30), function () { openMatch(m); }, "btn--round sh__round");
-        } else btn(TV.icon("info", 28) + esc(T("Match Details")), function () { openMatch(m); }, "btn--primary");
+        } else btn(TV.icon("info", 28) + esc(T(m.isEvent ? "Fight Card" : "Match Details")), function () { openMatch(m); }, "btn--primary");
         this.nav.setTiles(tiles, Math.min(keepBtn, tiles.length - 1));
         if (!this.active) this.nav.blur();
     };
@@ -2672,7 +2679,6 @@
             searchChip();
             // a chip per country or region, and per sport: straight to its competitions
             all.forEach(function (x) { var g = groupOf(x); if (g !== last) { last = g; groups.push([x.lg[3] ? T(x.lg[3]) : T(x.sp.label), g]); } });
-            groups.forEach(function (gp) { chip(esc(gp[0]), false, function () { var at = firstOf[gp[1]]; if (at !== undefined && setup.nav) { TV.sound.tick(); setup.nav.focus(at); } }); });
             if (d.sports.indexOf("mma") >= 0) {
                 [["all", T("All UFC Events")], ["numbered", T("Numbered Events")], ["fight-night", T("Fight Nights")]].forEach(function (option) {
                     chip(esc(option[1]), (d.ufcEventType || "all") === option[0], function () {
@@ -2682,6 +2688,7 @@
                     });
                 });
             }
+            groups.forEach(function (gp) { chip(esc(gp[0]), false, function () { var at = firstOf[gp[1]]; if (at !== undefined && setup.nav) { TV.sound.tick(); setup.nav.focus(at); } }); });
             last = "";
             all.forEach(function (x) { var g = groupOf(x); if (g !== last) { last = g; head(g); } leagueTile(x, ""); });
             if (!all.length) empty(T("Choose a sport first."));
