@@ -265,7 +265,7 @@
             scroll.appendChild(back);
             scroll.appendChild(el("div", "mma-event__promotion", esc(m.league[1])));
             scroll.appendChild(el("h1", "mma-event__title", esc(m.eventTitle)));
-            scroll.appendChild(el("p", "mma-event__meta", esc(new Date(m.start).toLocaleString(TV.locale) + (m.venue ? " · " + m.venue : ""))));
+            scroll.appendChild(el("p", "mma-event__meta", esc(new Date(m.start).toLocaleDateString(TV.locale, { weekday: "short", year: "numeric", month: "short", day: "numeric" }) + " · " + TV.hhmm(m.start) + (m.venue ? " · " + m.venue : ""))));
             var bouts = m.bouts || [], sections = [], groups = {};
             bouts.forEach(function (bout) { var key = bout.cardSection || "Fight Card"; if (!groups[key]) { groups[key] = []; sections.push(key); } groups[key].push(bout); });
             sections.forEach(function (section) {

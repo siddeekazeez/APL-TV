@@ -2,7 +2,7 @@
  "version": "1.1.1",
  "loader": 1,
  "reinstall": "1.0.1",
- "notes": "Integrated MMA event cards and artwork, cricket countries/clubs and live-first browsing.",
+ "notes": "MMA event browsing, artwork fallback, cricket countries and clubs, and live-first ordering.",
  "platforms": {
   "tizen": {
    "reinstall": "1.0.1"
