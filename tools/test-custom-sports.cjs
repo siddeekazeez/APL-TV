@@ -100,7 +100,7 @@ if (process.env.SPORTS_FIXTURE_DIR) {
 // The client must talk to its own native helper even when both app variants are running.
 const helperCode = fs.readFileSync(path.join(root, 'app/js/helper.js'), 'utf8');
 function helperPort(bridge) {
-    const host = { window: { TV: {} } };
+    const host = { window: { TV: {} }, setInterval() {} };
     if (bridge) host.window.APLAndroid = bridge;
     vm.runInNewContext(helperCode, host);
     return host.window.TV.helper.PORT;
