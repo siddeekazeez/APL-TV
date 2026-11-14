@@ -5,7 +5,7 @@
     var leagues = { mma: ["ufc", "UFC"], cricket: ["sri-lanka", "Sri Lanka Cricket", "i"] };
     function priority(m) { return m.sport === "mma" ? 0 : 1; }
     function enhance(f) {
-        if (!f || f.skipped || f.customSportsVersion) return false;
+        if (!f || f.skipped || f.customSportsVersion || !Array.isArray(f.sports) || !Array.isArray(f.leagues)) return false;
         ["mma", "cricket"].forEach(function (s) {
             if (f.sports.indexOf(s) < 0) f.sports.push(s);
             var key = s + "/" + leagues[s][0];

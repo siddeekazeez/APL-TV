@@ -17,6 +17,7 @@ assert.equal(custom.enhance(prefs), false);
 prefs.sports.splice(prefs.sports.indexOf('mma'), 1);
 assert.equal(custom.enhance(prefs), false, 'do not override subsequent user choices');
 assert.equal(custom.enhance({ skipped: 1 }), false);
+assert.equal(custom.enhance({}), false);
 assert.ok(custom.priority({ sport: 'mma' }) < custom.priority({ sport: 'soccer' }));
 
 // Exercise the adapter with the actual upstream parser, including the team-shaped MMA conversion.
@@ -71,3 +72,27 @@ if (process.env.SPORTS_FIXTURE_DIR) {
     assert.ok(custom.events(sl, 'cricket', parse).length > 0);
     console.log('Live ESPN fixture tests passed: ' + actual.length + ' UFC bouts');
 }
+
+(async function () {
+    let requests = 0, fail = false, now = Date.now();
+    class Clock extends Date { static now() { return now; } }
+    const env = { window: { TV: { log() {}, fetchJSON: async url => {
+        requests++;
+        if (fail) throw new Error('offline');
+        if (url.includes('leagues/dropdown')) return { leagues: [{ id: '24704', name: 'Sri Lanka in Pakistan Test Series', season: { year: 2026 } }] };
+        return { leagues: [{ id: '24704' }], events: [cricketEvent('Sri Lanka', '1')] };
+    } } }, Date: Clock };
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'app/js/custom-sports.js'), 'utf8'), env);
+    const loader = env.window.APL_CUSTOM_SPORTS;
+    const first = await loader.range('cricket', from, to, task => task(), parse);
+    assert.equal(first.length, 1);
+    assert.equal(requests, 2);
+    await loader.range('cricket', from, to, task => task(), parse);
+    assert.equal(requests, 2, 'cached results avoid repeated source calls');
+    now += 31000; fail = true;
+    assert.equal((await loader.range('cricket', from, to, task => task(), parse)).length, 1, 'keep last known matches during a source outage');
+    const fresh = { window: { TV: { log() {}, fetchJSON: async () => { throw new Error('offline'); } } } };
+    vm.runInNewContext(fs.readFileSync(path.join(root, 'app/js/custom-sports.js'), 'utf8'), fresh);
+    await assert.rejects(fresh.window.APL_CUSTOM_SPORTS.range('cricket', from, to, task => task(), parse), /offline/);
+    console.log('Sports source caching and failure tests passed');
+})().catch(error => { console.error(error); process.exitCode = 1; });
