@@ -38,6 +38,8 @@ const grouped = custom.events(raw, 'mma', parse, custom.promotions[0]);
 assert.equal(grouped.length, 1, 'one sports tile per event');
 assert.equal(grouped[0].bouts.length, 2, 'the entire card is retained');
 assert.equal(grouped[0].state, 'in', 'a live bout makes its parent live');
+const between = custom.events({ events: [{ ...raw.events[0], status: { type: { state: 'in' } }, competitions: [bout('done', 'post'), bout('next', 'pre')] }] }, 'mma', parse, custom.promotions[0]);
+assert.equal(between[0].state, 'in', 'events stay live between bouts when the source marks the event live');
 assert.notEqual(grouped[0].bouts[0].id, grouped[0].bouts[1].id);
 assert.equal(grouped[0].bouts[0].home.winner, false);
 assert.equal(grouped[0].sourceEvent, '334');

@@ -110,6 +110,9 @@
             for (var key in headline) event[key] = headline[key];
             event.id = "mma:" + sourceLg + ":" + e.id; event.isEvent = true; event.bouts = bouts;
             event.start = Date.parse(e.date) || headline.start; event.state = eventState(bouts);
+            var rootState = ((e.status || {}).type || {}).state;
+            if (rootState === "in" || event.state === "in") event.state = "in";
+            else if (rootState === "post") event.state = "post";
             event.art = images(e); event.note = "";
             event.status = ((e.status || {}).type || {}).name || "";
             out.push(event);
@@ -126,14 +129,14 @@
         var key = slug + "/" + year, c = seasons[key];
         if (c && Date.now() - c.at < (c.live ? 30000 : 600000)) return Promise.resolve(c.data);
         return fetch("sports/cricket/" + slug + "/scoreboard?season=" + year + "&limit=500").then(function (j) {
-            seasons[key] = { at: Date.now(), data: j, live: (j.events || []).some(function (e) { return ((e.status || {}).type || {}).state === "in"; }) };
+            seasons[key] = { at: Date.now(), data: j, live: (j.events || []).some(function (e) { var state = ((e.status || {}).type || {}).state; return state === "in" || state === "pre" && Math.abs(Date.parse(e.date) - Date.now()) < 20 * 60000; }) };
             return j;
         });
     }
     function range(sport, from, to, limited, parse, lg, selected) {
         lg = lg || (sport === "mma" ? promotions[0] : cricket[0]);
         var key = sport + "/" + lg[0] + "/" + from + "/" + to + "/" + JSON.stringify(selected && selected.teams || []), old = memo[key], now = Date.now();
-        if (old && now - old.at < (old.list.some(function (m) { return m.state === "in"; }) ? 30000 : 600000)) return Promise.resolve(old.list);
+        if (old && now - old.at < (old.list.some(function (m) { return m.state === "in" || m.state === "pre" && Math.abs(m.start - now) < 20 * 60000; }) ? 30000 : 600000)) return Promise.resolve(old.list);
         function fetch(path) { return limited(function () { return global.TV.fetchJSON(API + path, { timeout: 20000 }); }); }
         var jobs;
         if (sport === "mma") jobs = Promise.resolve([function () { return fetch("sports/mma/" + lg[0] + "/scoreboard?dates=" + date(from) + "-" + date(to - 1) + "&limit=500"); }]);
